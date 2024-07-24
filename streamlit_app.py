@@ -196,16 +196,16 @@ states_map = alt.Chart(data_geojson_remote).mark_geoshape(
 
 ).encode(
     #shape='geo:G',
-    #olor='Total:Q'
+    #color='Total:Q'
 ).properties(
     title='US State Registration',
-    #projection={'type': 'albersUsa'}
+    projection={'type': 'albersUsa'},
+    width=900,
+    height=600
+).transform_lookup(
+     lookup='state_id',
+     from_=alt.LookupData(df, 'state_id', ['Total'])
 )
-# .transform_lookup(
-#     lookup='state_id',
-#     from_=alt.LookupData(df, 'state_id', ['Total'])
-# )
 
 chart_map = states_map
-event = st.altair_chart(chart_map)
-event
+st.altair_chart(chart_map)
