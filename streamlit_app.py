@@ -1,7 +1,12 @@
 import streamlit as st
 import pandas as pd
+import altair as alt
+from vega_datasets import data
 import math
+from utilities import state_abbr_to_id
 from pathlib import Path
+
+
 
 # Set the title and favicon that appear in the Browser's tab bar.
 st.set_page_config(
@@ -11,6 +16,9 @@ st.set_page_config(
 
 # -----------------------------------------------------------------------------
 # Declare some useful functions.
+
+
+
 
 @st.cache_data
 def get_registration_data():
@@ -23,10 +31,8 @@ def get_registration_data():
 
     # Instead of a CSV on disk, you could read from an HTTP endpoint here too.
     DATA_FILENAME = Path(__file__).parent/'data/registration_by_state.csv'
-    df = pd.read_csv(DATA_FILENAME)
+    df = pd.read_csv(DATA_FILENAME, thousands=',')
 
-    MIN_YEAR = 2007
-    MAX_YEAR = 2024
 
     # The data above has columns like:
     # - Country Name
@@ -45,19 +51,16 @@ def get_registration_data():
     # - GDP
     #
     # So let's pivot all those year-columns into two: Year and GDP
-    df = df.melt(
-        ['State'],
-        [str(x) for x in range(MIN_YEAR, MAX_YEAR)],
-        'Year',
-        'Total',
-    )
 
     # Convert years from string to integers
-    df['Year'] = pd.to_numeric(df['Year'])
+    df['Year'] = pd.to_numeric(df['Year'].replace(',', ''))
+    df['Total'] = pd.to_numeric(df['Total'])
 
     return df
 
 df = get_registration_data()
+# for state in df:
+#     df[state]['id'] = state_abbr_to_id(df['State'])
 
 # -----------------------------------------------------------------------------
 # Draw the actual page
@@ -99,18 +102,18 @@ selected_states = st.multiselect(
 ''
 
 # Filter the data
-filtered_gdp_df = df[
+filtered_df = df[
     (df['State'].isin(selected_states))
     & (df['Year'] <= to_year)
     & (from_year <= df['Year'])
 ]
 
-st.header('Registratoin count over time', divider='gray')
+st.header('Registration count over time', divider='gray')
 
 ''
 
 st.line_chart(
-    filtered_gdp_df,
+    filtered_df,
     x='Year',
     y='Total',
     color='State',
@@ -121,6 +124,7 @@ st.line_chart(
 
 
 first_year = df[df['Year'] == from_year]
+#print(first_year)
 last_year = df[df['Year'] == to_year]
 
 st.header(f'Total in {to_year}', divider='gray')
@@ -134,6 +138,7 @@ for i, state in enumerate(selected_states):
 
     with col:
         first_reg = first_year[df['State'] == state]['Total'].iat[0]
+        print(state)
         last_reg = last_year[df['State'] == state]['Total'].iat[0]
 
         if math.isnan(first_reg):
@@ -149,3 +154,31 @@ for i, state in enumerate(selected_states):
             delta=growth,
             delta_color=delta_color
         )
+
+
+# Add some spacing
+''
+''
+
+# Add map
+
+
+states_topo = alt.topo_feature(data.us_10m.url, 'states')
+
+states_map = alt.Chart(states_topo).mark_geoshape().encode(
+    #shape='geo:G',
+    color='Total:Q'
+).properties(
+    title='US State Registration',
+    width=950,
+    height=600,
+    projection={'type': 'albersUsa'}
+).transform_lookup(
+    lookup='state_id',
+    from_=alt.LookupData(df, 'state_id', ['Total'])
+)
+
+
+chart_map = states_map
+event = st.altair_chart(chart_map)
+event
