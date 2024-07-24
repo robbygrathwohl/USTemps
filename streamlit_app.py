@@ -5,7 +5,7 @@ from pathlib import Path
 
 # Set the title and favicon that appear in the Browser's tab bar.
 st.set_page_config(
-    page_title='GDP dashboard',
+    page_title='USA Hockey Registration dashboard',
     page_icon=':earth_americas:', # This is an emoji shortcode. Could be a URL too.
 )
 
@@ -13,7 +13,7 @@ st.set_page_config(
 # Declare some useful functions.
 
 @st.cache_data
-def get_gdp_data():
+def get_registration_data():
     """Grab GDP data from a CSV file.
 
     This uses caching to avoid having to read the file every time. If we were
@@ -22,11 +22,11 @@ def get_gdp_data():
     """
 
     # Instead of a CSV on disk, you could read from an HTTP endpoint here too.
-    DATA_FILENAME = Path(__file__).parent/'data/gdp_data.csv'
-    raw_gdp_df = pd.read_csv(DATA_FILENAME)
+    DATA_FILENAME = Path(__file__).parent/'data/registration_by_state.csv'
+    df = pd.read_csv(DATA_FILENAME)
 
-    MIN_YEAR = 1960
-    MAX_YEAR = 2022
+    MIN_YEAR = 2007
+    MAX_YEAR = 2024
 
     # The data above has columns like:
     # - Country Name
@@ -45,19 +45,19 @@ def get_gdp_data():
     # - GDP
     #
     # So let's pivot all those year-columns into two: Year and GDP
-    gdp_df = raw_gdp_df.melt(
-        ['Country Code'],
-        [str(x) for x in range(MIN_YEAR, MAX_YEAR + 1)],
+    df = df.melt(
+        ['State'],
+        [str(x) for x in range(MIN_YEAR, MAX_YEAR)],
         'Year',
-        'GDP',
+        'Total',
     )
 
     # Convert years from string to integers
-    gdp_df['Year'] = pd.to_numeric(gdp_df['Year'])
+    df['Year'] = pd.to_numeric(df['Year'])
 
-    return gdp_df
+    return df
 
-gdp_df = get_gdp_data()
+df = get_registration_data()
 
 # -----------------------------------------------------------------------------
 # Draw the actual page
@@ -75,8 +75,8 @@ But it's otherwise a great (and did I mention _free_?) source of data.
 ''
 ''
 
-min_value = gdp_df['Year'].min()
-max_value = gdp_df['Year'].max()
+min_value = df['Year'].min()
+max_value = df['Year'].max()
 
 from_year, to_year = st.slider(
     'Which years are you interested in?',
@@ -84,68 +84,68 @@ from_year, to_year = st.slider(
     max_value=max_value,
     value=[min_value, max_value])
 
-countries = gdp_df['Country Code'].unique()
+states = df['State'].unique()
 
-if not len(countries):
-    st.warning("Select at least one country")
+if not len(states):
+    st.warning("Select at least one state")
 
-selected_countries = st.multiselect(
-    'Which countries would you like to view?',
-    countries,
-    ['DEU', 'FRA', 'GBR', 'BRA', 'MEX', 'JPN'])
+selected_states = st.multiselect(
+    'Which states would you like to view?',
+    states,
+    ['MA', 'MN', 'NY', 'NJ', 'OH', 'IL'])
 
 ''
 ''
 ''
 
 # Filter the data
-filtered_gdp_df = gdp_df[
-    (gdp_df['Country Code'].isin(selected_countries))
-    & (gdp_df['Year'] <= to_year)
-    & (from_year <= gdp_df['Year'])
+filtered_gdp_df = df[
+    (df['State'].isin(selected_states))
+    & (df['Year'] <= to_year)
+    & (from_year <= df['Year'])
 ]
 
-st.header('GDP over time', divider='gray')
+st.header('Registratoin count over time', divider='gray')
 
 ''
 
 st.line_chart(
     filtered_gdp_df,
     x='Year',
-    y='GDP',
-    color='Country Code',
+    y='Total',
+    color='State',
 )
 
 ''
 ''
 
 
-first_year = gdp_df[gdp_df['Year'] == from_year]
-last_year = gdp_df[gdp_df['Year'] == to_year]
+first_year = df[df['Year'] == from_year]
+last_year = df[df['Year'] == to_year]
 
-st.header(f'GDP in {to_year}', divider='gray')
+st.header(f'Total in {to_year}', divider='gray')
 
 ''
 
 cols = st.columns(4)
 
-for i, country in enumerate(selected_countries):
+for i, state in enumerate(selected_states):
     col = cols[i % len(cols)]
 
     with col:
-        first_gdp = first_year[gdp_df['Country Code'] == country]['GDP'].iat[0] / 1000000000
-        last_gdp = last_year[gdp_df['Country Code'] == country]['GDP'].iat[0] / 1000000000
+        first_reg = first_year[df['State'] == state]['Total'].iat[0]
+        last_reg = last_year[df['State'] == state]['Total'].iat[0]
 
-        if math.isnan(first_gdp):
+        if math.isnan(first_reg):
             growth = 'n/a'
             delta_color = 'off'
         else:
-            growth = f'{last_gdp / first_gdp:,.2f}x'
+            growth = f'{last_reg / first_reg:,.2f}x'
             delta_color = 'normal'
 
         st.metric(
-            label=f'{country} GDP',
-            value=f'{last_gdp:,.0f}B',
+            label=f'{state} Player Count',
+            value=f'{last_reg}',
             delta=growth,
             delta_color=delta_color
         )
