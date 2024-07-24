@@ -10,7 +10,7 @@ from pathlib import Path
 # Set the title and favicon that appear in the Browser's tab bar.
 st.set_page_config(
     page_title='USA Hockey Registration dashboard',
-    page_icon=':earth_americas:', # This is an emoji shortcode. Could be a URL too.
+    page_icon=':ice_hockey_stick_and_puck:', # This is an emoji shortcode. Could be a URL too.
 )
 
 # -----------------------------------------------------------------------------
@@ -21,7 +21,7 @@ st.set_page_config(
 
 @st.cache_data
 def get_registration_data():
-    """Grab GDP data from a CSV file.
+    """Grab USA Hockey Registration data from a CSV file.
 
     This uses caching to avoid having to read the file every time. If we were
     reading from an HTTP endpoint instead of a file, it's a good idea to set
@@ -32,25 +32,7 @@ def get_registration_data():
     DATA_FILENAME = Path(__file__).parent/'data/registration_by_state.csv'
     df = pd.read_csv(DATA_FILENAME, thousands=',')
 
-    # The data above has columns like:
-    # - Country Name
-    # - Country Code
-    # - [Stuff I don't care about]
-    # - GDP for 1960
-    # - GDP for 1961
-    # - GDP for 1962
-    # - ...
-    # - GDP for 2022
-    #
-    # ...but I want this instead:
-    # - Country Name
-    # - Country Code
-    # - Year
-    # - GDP
-    #
-    # So let's pivot all those year-columns into two: Year and GDP
 
-    # Convert years from string to integers
     df['Year'] = pd.to_numeric(df['Year']).replace(',', '')
     print(df['Year'])
     df['Total'] = pd.to_numeric(df['Total'])
@@ -65,7 +47,7 @@ df['id']=df['State'].map(state_abbr_map)
 
 # Set the title that appears at the top of the page.
 '''
-# :earth_americas: USA Hockey Player Registration
+# :ice_hockey_stick_and_puck: USA Hockey Player Registration
 
 Browse Historical Player Registration data from the [USA Hockey](https://www.usahockey.com/membershipstats) website.
 As you'll notice, the data only goes back to 2007 right now, but data back to 1996 is soon to come!
@@ -165,10 +147,17 @@ for i, state in enumerate(selected_states):
 # Add map
 
 
-df['state_id'] = df['state_id'].astype(str)
-
 url_geojson = 'https://raw.githubusercontent.com/robbygrathwohl/USTemps/main/data/us_states.json'
 data_geojson_remote = alt.Data(url=url_geojson, format=alt.DataFormat(property='features',type='json'))
+
+# year = st.slider(
+#     'Which year are you interested in?',
+#     min_value=min_value,
+#     max_value=max_value,
+#     value = max_value
+# )
+
+filtered_map_df = df[df['Year'] == 2024]
 
 
 states_map = alt.Chart(data_geojson_remote).mark_geoshape(
@@ -177,11 +166,11 @@ states_map = alt.Chart(data_geojson_remote).mark_geoshape(
 ).encode(
     color=alt.Color('Total:Q').scale(scheme='viridis')
 ).properties(
-    title='US State Registration',
+    title='USA Hockey 2024 Registration by State',
     projection={'type': 'albersUsa'},
 ).transform_lookup(
      lookup='properties.STATE',
-     from_=alt.LookupData(df, 'id', ['Total'])
+     from_=alt.LookupData(filtered_map_df, 'id', ['Total'])
 )
 
 
