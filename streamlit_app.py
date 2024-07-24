@@ -3,6 +3,7 @@ import pandas as pd
 import altair as alt
 from vega_datasets import data
 import math
+import numpy as np
 from utilities import state_abbr_to_id
 from pathlib import Path
 
@@ -163,22 +164,33 @@ for i, state in enumerate(selected_states):
 # Add map
 
 
-states_topo = alt.topo_feature(data.us_10m.url, 'states')
+# states_topo = alt.topo_feature(data.us_10m.url, 'states')
 
-states_map = alt.Chart(states_topo).mark_geoshape().encode(
-    #shape='geo:G',
-    color='Total:Q'
-).properties(
-    title='US State Registration',
-    width=950,
-    height=600,
-    projection={'type': 'albersUsa'}
-).transform_lookup(
-    lookup='state_id',
-    from_=alt.LookupData(df, 'state_id', ['Total'])
+# states_map = alt.Chart(states_topo).mark_geoshape().encode(
+#     #shape='geo:G',
+#     color='Total:Q'
+# ).properties(
+#     title='US State Registration',
+#     width=950,
+#     height=600,
+#     projection={'type': 'albersUsa'}
+# ).transform_lookup(
+#     lookup='state_id',
+#     from_=alt.LookupData(df, 'state_id', ['Total'])
+# )
+
+
+# chart_map = states_map
+# event = st.altair_chart(chart_map)
+# event
+
+
+chart_data = pd.DataFrame(np.random.randn(20, 3), columns=["a", "b", "c"])
+
+c = (
+   alt.Chart(chart_data)
+   .mark_circle()
+   .encode(x="a", y="b", size="c", color="c", tooltip=["a", "b", "c"])
 )
 
-
-chart_map = states_map
-event = st.altair_chart(chart_map)
-event
+st.altair_chart(c, use_container_width=True)
