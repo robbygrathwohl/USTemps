@@ -4,7 +4,6 @@ import altair as alt
 from vega_datasets import data
 import math
 import numpy as np
-from utilities import state_abbr_to_id
 from config import state_abbr_map
 from pathlib import Path
 
@@ -33,7 +32,6 @@ def get_registration_data():
     DATA_FILENAME = Path(__file__).parent/'data/registration_by_state.csv'
     df = pd.read_csv(DATA_FILENAME, thousands=',')
 
-
     # The data above has columns like:
     # - Country Name
     # - Country Code
@@ -53,28 +51,24 @@ def get_registration_data():
     # So let's pivot all those year-columns into two: Year and GDP
 
     # Convert years from string to integers
-    df['Year'] = pd.to_numeric(df['Year'].replace(',', ''))
+    df['Year'] = pd.to_numeric(df['Year']).replace(',', '')
+    print(df['Year'])
     df['Total'] = pd.to_numeric(df['Total'])
 
     return df
 
 df = get_registration_data()
 df['id']=df['State'].map(state_abbr_map)
-#print(df)
-# for state in df['State']:
-#     print(state)
-#     df[state]['id'] = state_abbr_to_id(state)
 
 # -----------------------------------------------------------------------------
 # Draw the actual page
 
 # Set the title that appears at the top of the page.
 '''
-# :earth_americas: GDP dashboard
+# :earth_americas: USA Hockey Player Registration
 
-Browse GDP data from the [World Bank Open Data](https://data.worldbank.org/) website. As you'll
-notice, the data only goes to 2022 right now, and datapoints for certain years are often missing.
-But it's otherwise a great (and did I mention _free_?) source of data.
+Browse Historical Player Registration data from the [USA Hockey](https://www.usahockey.com/membershipstats) website.
+As you'll notice, the data only goes back to 2007 right now, but data back to 1996 is soon to come!
 '''
 
 # Add some spacing
@@ -161,12 +155,18 @@ for i, state in enumerate(selected_states):
 # Add some spacing
 ''
 ''
+''
+''
+''
+''
+
+''
 
 # Add map
 
 
 df['state_id'] = df['state_id'].astype(str)
-print(df.dtypes)
+
 url_geojson = 'https://raw.githubusercontent.com/robbygrathwohl/USTemps/main/data/us_states.json'
 data_geojson_remote = alt.Data(url=url_geojson, format=alt.DataFormat(property='features',type='json'))
 
@@ -175,21 +175,16 @@ states_map = alt.Chart(data_geojson_remote).mark_geoshape(
     stroke='white',
     strokeWidth=1
 ).encode(
-    color='Total:Q'
+    color=alt.Color('Total:Q').scale(scheme='viridis')
 ).properties(
     title='US State Registration',
     projection={'type': 'albersUsa'},
-    width=900,
-    height=600
 ).transform_lookup(
      lookup='properties.STATE',
      from_=alt.LookupData(df, 'id', ['Total'])
 )
 
 
-#print(df)
 
 
-
-chart_map = states_map
-st.altair_chart(chart_map)
+st.altair_chart(states_map, use_container_width=True)
