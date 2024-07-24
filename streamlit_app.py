@@ -5,12 +5,8 @@ from vega_datasets import data
 import math
 import numpy as np
 from utilities import state_abbr_to_id
+from config import state_abbr_map
 from pathlib import Path
-
-url_geojson = 'https://eric.clst.org/assets/wiki/uploads/Stuff/gz_2010_us_040_00_20m.json'
-
-data_geojson_remote = alt.Data(url=url_geojson, format=alt.DataFormat(property='features',type='json'))
-
 
 # Set the title and favicon that appear in the Browser's tab bar.
 st.set_page_config(
@@ -63,8 +59,11 @@ def get_registration_data():
     return df
 
 df = get_registration_data()
-# for state in df:
-#     df[state]['id'] = state_abbr_to_id(df['State'])
+df['id']=df['State'].map(state_abbr_map)
+#print(df)
+# for state in df['State']:
+#     print(state)
+#     df[state]['id'] = state_abbr_to_id(state)
 
 # -----------------------------------------------------------------------------
 # Draw the actual page
@@ -142,7 +141,6 @@ for i, state in enumerate(selected_states):
 
     with col:
         first_reg = first_year[df['State'] == state]['Total'].iat[0]
-        print(state)
         last_reg = last_year[df['State'] == state]['Total'].iat[0]
 
         if math.isnan(first_reg):
@@ -167,45 +165,31 @@ for i, state in enumerate(selected_states):
 # Add map
 
 
-# states_topo = alt.topo_feature(data.us_10m.url, 'states')
-
-
-
-
-
-
-url_geojson = 'https://raw.githubusercontent.com/mattijn/datasets/master/two_polygons.geo.json'
-data_geojson_remote = alt.Data(url=url_geojson, format=alt.DataFormat(property='features',type='json'))
-
-# chart object
-chart = alt.Chart(data_geojson_remote).mark_geoshape(
-).encode(
-    color="properties.name:N"
-).project(
-    type='identity', reflectY=True
-)
-
-chart
-
+df['state_id'] = df['state_id'].astype(str)
+print(df.dtypes)
 url_geojson = 'https://raw.githubusercontent.com/robbygrathwohl/USTemps/main/data/us_states.json'
-
 data_geojson_remote = alt.Data(url=url_geojson, format=alt.DataFormat(property='features',type='json'))
 
 
 states_map = alt.Chart(data_geojson_remote).mark_geoshape(
-
+    stroke='white',
+    strokeWidth=1
 ).encode(
-    #shape='geo:G',
-    #color='Total:Q'
+    color='Total:Q'
 ).properties(
     title='US State Registration',
     projection={'type': 'albersUsa'},
     width=900,
     height=600
 ).transform_lookup(
-     lookup='state_id',
-     from_=alt.LookupData(df, 'state_id', ['Total'])
+     lookup='properties.STATE',
+     from_=alt.LookupData(df, 'id', ['Total'])
 )
+
+
+#print(df)
+
+
 
 chart_map = states_map
 st.altair_chart(chart_map)
