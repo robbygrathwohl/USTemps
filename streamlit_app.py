@@ -7,6 +7,9 @@ import numpy as np
 from utilities import state_abbr_to_id
 from pathlib import Path
 
+url_geojson = 'https://eric.clst.org/assets/wiki/uploads/Stuff/gz_2010_us_040_00_20m.json'
+
+data_geojson_remote = alt.Data(url=url_geojson, format=alt.DataFormat(property='features',type='json'))
 
 
 # Set the title and favicon that appear in the Browser's tab bar.
@@ -166,47 +169,43 @@ for i, state in enumerate(selected_states):
 
 # states_topo = alt.topo_feature(data.us_10m.url, 'states')
 
-# states_map = alt.Chart(states_topo).mark_geoshape().encode(
-#     #shape='geo:G',
-#     color='Total:Q'
-# ).properties(
-#     title='US State Registration',
-#     width=950,
-#     height=600,
-#     projection={'type': 'albersUsa'}
-# ).transform_lookup(
-#     lookup='state_id',
-#     from_=alt.LookupData(df, 'state_id', ['Total'])
-# )
 
 
-# chart_map = states_map
-# event = st.altair_chart(chart_map)
-# event
 
 
-chart_data = pd.DataFrame(np.random.randn(20, 3), columns=["a", "b", "c"])
 
-c = (
-   alt.Chart(chart_data)
-   .mark_circle()
-   .encode(x="a", y="b", size="c", color="c", tooltip=["a", "b", "c"])
-)
+url_geojson = 'https://raw.githubusercontent.com/mattijn/datasets/master/two_polygons.geo.json'
+data_geojson_remote = alt.Data(url=url_geojson, format=alt.DataFormat(property='features',type='json'))
 
-st.altair_chart(c, use_container_width=True)
-
-
-states = alt.topo_feature(data.us_10m.url, 'states')
-pop = data.population_engineers_hurricanes()
-
-alt.Chart(states).mark_geoshape().encode(
-	color='population:Q'
-).transform_lookup(
-	lookup='id',
-	from_=alt.LookupData(pop, 'id', list(pop.columns))
-).properties(
-	width=500,
-	height=300
+# chart object
+chart = alt.Chart(data_geojson_remote).mark_geoshape(
+).encode(
+    color="properties.name:N"
 ).project(
-	type='albersUsa'
+    type='identity', reflectY=True
 )
+
+chart
+
+url_geojson = 'https://eric.clst.org/assets/wiki/uploads/Stuff/gz_2010_us_040_00_20m.json'
+
+data_geojson_remote = alt.Data(url=url_geojson, format=alt.DataFormat(property='features',type='json'))
+
+
+states_map = alt.Chart(data_geojson_remote).mark_geoshape().encode(
+    #shape='geo:G',
+    color='Total:Q'
+).properties(
+    title='US State Registration',
+    width=950,
+    height=600,
+    projection={'type': 'albersUsa'}
+).transform_lookup(
+    lookup='state_id',
+    from_=alt.LookupData(df, 'state_id', ['Total'])
+)
+
+
+chart_map = states_map
+event = st.altair_chart(chart_map)
+event
