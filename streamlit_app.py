@@ -187,24 +187,24 @@ chart = alt.Chart(data_geojson_remote).mark_geoshape(
 
 chart
 
-url_geojson = 'https://eric.clst.org/assets/wiki/uploads/Stuff/gz_2010_us_040_00_20m.json'
+url_geojson = 'https://raw.githubusercontent.com/robbygrathwohl/USTemps/main/data/us_states.json'
 
 data_geojson_remote = alt.Data(url=url_geojson, format=alt.DataFormat(property='features',type='json'))
 
 
-states_map = alt.Chart(data_geojson_remote).mark_geoshape().encode(
+states_map = alt.Chart(data_geojson_remote).mark_geoshape(
+
+).encode(
     #shape='geo:G',
-    color='Total:Q'
+    #olor='Total:Q'
 ).properties(
     title='US State Registration',
-    width=950,
-    height=600,
-    projection={'type': 'albersUsa'}
-).transform_lookup(
-    lookup='state_id',
-    from_=alt.LookupData(df, 'state_id', ['Total'])
+    #projection={'type': 'albersUsa'}
 )
-
+# .transform_lookup(
+#     lookup='state_id',
+#     from_=alt.LookupData(df, 'state_id', ['Total'])
+# )
 
 chart_map = states_map
 event = st.altair_chart(chart_map)
