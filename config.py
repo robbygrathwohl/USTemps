@@ -40,6 +40,7 @@ state_abbr_map ={
     'OR' : '41',
     'E PA' : '42',
     'W PA' : '42',
+    'PA' : '42',
     'RI' : '44',
     'SC' : '45',
     'SD' : '46',
@@ -58,7 +59,7 @@ state_abbr_map ={
     'PR' : '72',
     'UM' : '74',
     'VI' : '78',
-    'Not a state': '00'
+    'Total': '00'
 }
 
 

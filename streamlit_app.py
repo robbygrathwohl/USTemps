@@ -33,13 +33,14 @@ def get_registration_data():
     df = pd.read_csv(DATA_FILENAME, thousands=',')
 
 
-    df['Year'] = pd.to_numeric(df['Year']).replace(',', '')
-    print(df['Year'])
+    df['Year'] = pd.to_numeric(df['Year'])
     df['Total'] = pd.to_numeric(df['Total'])
-
+    
+    
     return df
 
 df = get_registration_data()
+df.style.format(thousands='')
 df['id']=df['State'].map(state_abbr_map)
 
 # -----------------------------------------------------------------------------
@@ -65,6 +66,8 @@ from_year, to_year = st.slider(
     min_value=min_value,
     max_value=max_value,
     value=[min_value, max_value])
+
+
 
 states = df['State'].unique()
 
@@ -160,18 +163,24 @@ data_geojson_remote = alt.Data(url=url_geojson, format=alt.DataFormat(property='
 filtered_map_df = df[df['Year'] == 2024]
 
 
+bin=[0, 10000, 20000, 30000, 40000, 50000, 60000]
+
+
 states_map = alt.Chart(data_geojson_remote).mark_geoshape(
     stroke='white',
     strokeWidth=1
 ).encode(
-    color=alt.Color('Total:Q').scale(scheme='viridis')
+    color=alt.Color('Total:Q').scale(scheme='viridis', bins=bin, rangeMax=60000),
+    tooltip=['State:N', 'Total:Q']
 ).properties(
-    title='USA Hockey 2024 Registration by State',
-    projection={'type': 'albersUsa'},
+    title='USA Hockey 2024 Registration by State'
 ).transform_lookup(
      lookup='properties.STATE',
-     from_=alt.LookupData(filtered_map_df, 'id', ['Total'])
+     from_=alt.LookupData(filtered_map_df, 'id', ['Total', 'State'])
+).project(
+    type='albersUsa'
 )
+
 
 
 
